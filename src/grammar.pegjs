@@ -1,47 +1,47 @@
 start = NODES
 
 NODES = (c:NODE _ { return c; })*
-NODE  = CFTTag / HTMLNode
+NODE  = ECOTag / HTMLNode
 
-// CFT
+// ECO
 
-CFT     = CFTTags
-CFTTags = (c:CFTTag _ { return c; })*
-CFTTag  = CFTLiteral / CFTEND / CFTEscapedContent / CFTContent / CFTExpression
+ECO     = ECOTags
+ECOTags = (c:ECOTag _ { return c; })*
+ECOTag  = ECOLiteral / ECOEND / ECOEscapedContent / ECOContent / ECOExpression
 
 // <%% / %%>
-CFTLiteral = CFTLiteralLeft / CFTLiteralRight
-CFTLiteralLeft  = '<%%' { return { cft: 'literal', type: 'left' } }
-CFTLiteralRight = '%%>' { return { cft: 'literal', type: 'right' } }
+ECOLiteral = ECOLiteralLeft / ECOLiteralRight
+ECOLiteralLeft  = '<%%' { return { tag: 'eco', type: 'leftLiteral' } }
+ECOLiteralRight = '%%>' { return { tag: 'eco', type: 'rightLiteral' } }
 
 // <% end %>
-CFTEND =
-  CFTOpen _ 'end' _ CFTClose
-  { return { cft: 'end' } }
+ECOEND =
+  ECOOpen _ 'end' _ ECOClose
+  { return { tag: 'eco', type: 'end' } }
 
 // <% %>
-CFTExpression =
-  CFTOpen _ cont:CFTTagChars? indent:CFTIndent _ CFTClose
-  { return { cft: 'expression', content: cont, indent: indent }}
+ECOExpression =
+  ECOOpen _ cont:ECOTagChars? indent:ECOIndent _ ECOClose
+  { return { tag: 'eco', type: 'expression', content: cont, indent: indent }}
 
 // <%= %>
-CFTEscapedContent =
-  CFTOpen '=' _ cont:CFTTagChars _ CFTClose
-  { return { cft: 'escapedContent', content: cont }}
+ECOEscapedContent =
+  ECOOpen '=' _ cont:ECOTagChars _ ECOClose
+  { return { tag: 'eco', type: 'escapedContent', content: cont }}
 
 // <%- %>
-CFTContent =
-  CFTOpen '-' _ cont:CFTTagChars _ CFTClose
-  { return { cft: 'content', content: cont }}
+ECOContent =
+  ECOOpen '-' _ cont:ECOTagChars _ ECOClose
+  { return { tag: 'eco', type: 'content', content: cont }}
 
-// CFT Utilities
+// ECO Utilities
 
-CFTTagChar = !(":"? _ "%>") c:char { return c; }
-CFTTagChars = c:(CFTTagChar+) { return c.join(''); }
+ECOTagChar = !(":"? _ "%>") c:char { return c; }
+ECOTagChars = c:(ECOTagChar+) { return c.join(''); }
 
-CFTIndent = indent:':'? { return !!indent }
-CFTOpen   = '<%'
-CFTClose  = '%>'
+ECOIndent = indent:':'? { return !!indent }
+ECOOpen   = '<%'
+ECOClose  = '%>'
 
 // HTML
 
@@ -76,7 +76,7 @@ HTMLContentChars = c:(HTMLContentChar+) { return c.join(''); }
 
 HTMLDoctype "doctype"
   = HTMLElementOpenDelim "!" "DOCTYPE"i _ cont:HTMLNodeChars _ HTMLElementCloseDelim
-{ return { doctype : cont } }
+{ return { tag: 'DOCTYPE', content: cont } }
 
 // Element
 
