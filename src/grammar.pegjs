@@ -1,38 +1,38 @@
 start = NODES
 
 NODES = (c:NODE _ { return c; })*
-NODE  = ECOTag / HTMLNode
+NODE  = node:ECONode / HTMLNode
 
 // ECO
 
-ECO     = ECOTags
-ECOTags = (c:ECOTag _ { return c; })*
-ECOTag  = ECOLiteral / ECOEND / ECOEscapedContent / ECOContent / ECOExpression
+ECO      = ECONodes
+ECONodes = (c:ECONode _ { return c; })*
+ECONode  = ECOLiteral / ECOEND / ECOEscapedContent / ECOContent / ECOExpression
 
 // <%% / %%>
 ECOLiteral = ECOLiteralLeft / ECOLiteralRight
-ECOLiteralLeft  = '<%%' { return { tag: 'eco', type: 'leftLiteral' } }
-ECOLiteralRight = '%%>' { return { tag: 'eco', type: 'rightLiteral' } }
+ECOLiteralLeft  = '<%%' { return { type: 'eco', tag: 'leftLiteral' } }
+ECOLiteralRight = '%%>' { return { type: 'eco', tag: 'rightLiteral' } }
 
 // <% end %>
 ECOEND =
   ECOOpen _ 'end' _ ECOClose
-  { return { tag: 'eco', type: 'end' } }
+  { return { type: 'eco', tag: 'end' } }
 
 // <% %>
 ECOExpression =
   ECOOpen _ cont:ECOTagChars? indent:ECOIndent _ ECOClose
-  { return { tag: 'eco', type: 'expression', content: cont, indent: indent }}
+  { return { type: 'eco', tag: 'expression', content: cont, indent: indent }}
 
 // <%= %>
 ECOEscapedContent =
   ECOOpen '=' _ cont:ECOTagChars _ ECOClose
-  { return { tag: 'eco', type: 'escapedContent', content: cont }}
+  { return { type: 'eco', tag: 'escapedContent', content: cont }}
 
 // <%- %>
 ECOContent =
   ECOOpen '-' _ cont:ECOTagChars _ ECOClose
-  { return { tag: 'eco', type: 'content', content: cont }}
+  { return { type: 'eco', tag: 'content', content: cont }}
 
 // ECO Utilities
 
@@ -48,16 +48,20 @@ ECOClose  = '%>'
 HTML = HTMLNodes
 
 HTMLNodes = (c:HTMLNode _ { return c; })*
-HTMLNode = HTMLDoctype / HTMLCDATA / HTMLComment / HTMLScript / HTMLStyle / HTMLElement / HTMLContentChars
+HTMLNode = HTMLDoctype / HTMLCDATA / HTMLComment / HTMLScript / HTMLStyle / HTMLElement / HTMLText
 
 HTMLAttribute "element attribute"
   = t:HTMLTag _ '=' _ v:HTMLValue _ { return { attr: t, value: v } }
-  / t:HTMLTag v:(HTMLValueDoubleQuoted / HTMLValueQuoted) { return { attr: t, value: v } } // when missing '='
-  / t:HTMLTag _ { return {tag: t }}
+  / t:HTMLTag v:(HTMLValueDoubleQuoted / HTMLValueQuoted) { return { attr: t, value: v } }
+  / t:HTMLTag _ { return { attr: t }}
+  / ECONode
 
 // CDATA
 
-HTMLCDATA "CDATA section" = "<![CDATA[" cont:HTMLCDATAChars "]]>" { return { tag: 'CDATA', 'content': cont  } }
+HTMLCDATA "CDATA section"
+  = "<![CDATA[" cont:HTMLCDATAChars "]]>"
+  { return { type: 'cdata', 'content': cont  } }
+
 HTMLCDATAChar = !("]]>") c:char { return c; }
 HTMLCDATAChars = c:(HTMLCDATAChar+) { return c.join(''); }
 
@@ -65,18 +69,15 @@ HTMLCDATAChars = c:(HTMLCDATAChar+) { return c.join(''); }
 
 HTMLComment "comment"
   = HTMLElementOpenDelim '!--' _ chars:(HTMLCommentSTChar*) _ '--' HTMLElementCloseDelim
-  { return { comment: chars.join('') } }
+  { return { type: 'comment', content: chars.join('') } }
 
 HTMLCommentSTChar = !("-->") c:char { return c; }
-
-HTMLContentChar = !("</" / "<") c:char { return c; }
-HTMLContentChars = c:(HTMLContentChar+) { return c.join(''); }
 
 // Doctype
 
 HTMLDoctype "doctype"
   = HTMLElementOpenDelim "!" "DOCTYPE"i _ cont:HTMLNodeChars _ HTMLElementCloseDelim
-{ return { tag: 'DOCTYPE', content: cont } }
+{ return { type: 'doctype', content: cont } }
 
 // Element
 
@@ -84,30 +85,41 @@ HTMLElement =  HTMLElementInline / HTMLElementOpen / HTMLElementClose
 
 HTMLElementInline "inline element"
   = HTMLElementOpenDelim _ t:HTMLTag _ attrs:HTMLAttribute* _ '/' _ HTMLElementCloseDelim
-  { return { tag : t, type: 'inline', attributes: attrs } }
+  { return { type: 'element', tag : t, variant: 'inline', attributes: attrs } }
 HTMLElementOpen "new element"
   = HTMLElementOpenDelim _ t:HTMLTag _ attrs:HTMLAttribute* _ HTMLElementCloseDelim
-  { return { tag : t, type: 'open', attributes: attrs } }
+  { return { type: 'element', tag : t, variant: 'open', attributes: attrs } }
 HTMLElementOpenDelim = '<'
 HTMLElementClose "end of element"
   = HTMLElementOpenDelim _ '/' _ t:HTMLTag _ HTMLElementCloseDelim
-  { return { tag : t, type: 'close' } }
+  { return { type: 'element', tag : t, variant: 'close' } }
 HTMLElementCloseDelim = '>'
 
 // Script element
 
-HTMLScript "element <script>" = HTMLElementOpenDelim _ 'script'i _ attrs:HTMLAttribute* _ HTMLElementCloseDelim cont:(HTMLScriptContentChars) HTMLElementOpenDelim _ '/' _ 'script'i _ HTMLElementCloseDelim
-{ return { tag : 'script', attributes: attrs, content: cont} }
+HTMLScript "element <script>" =
+  HTMLElementOpenDelim _ 'script'i _ attrs:HTMLAttribute* _ HTMLElementCloseDelim cont:(HTMLScriptContentChars) HTMLElementOpenDelim _ '/' _ 'script'i _ HTMLElementCloseDelim
+  { return { type : 'script', attributes: attrs, content: cont} }
 
 HTMLScriptContentChar = !("</script>") c:char { return c; }
 HTMLScriptContentChars = c:(HTMLScriptContentChar+) { return c.join(''); }
 
 // Style element
 
-HTMLStyle "element <style>" =  HTMLElementOpenDelim _ 'style'i _ attrs:HTMLAttribute* _ HTMLElementCloseDelim cont:(HTMLContentChars) HTMLElementOpenDelim _ '/' _ 'style'i _ HTMLElementCloseDelim
-{ return { tag : 'style', attributes: attrs, content: cont} }
+HTMLStyle "element <style>" =
+  HTMLElementOpenDelim _ 'style'i _ attrs:HTMLAttribute* _ HTMLElementCloseDelim cont:(HTMLContentChars) HTMLElementOpenDelim _ '/' _ 'style'i _ HTMLElementCloseDelim
+  { return { type : 'style', attributes: attrs, content: cont} }
+
+// Text
+
+HTMLText
+  = cont:(HTMLContentChars)+
+  { return { type: 'text', content: cont }}
 
 // HTML Utilities
+
+HTMLContentChar = !("</" / "<") c:char { return c; }
+HTMLContentChars = c:(HTMLContentChar+) { return c.join(''); }
 
 HTMLTag = chars:(HTMLTagChars)+ { return chars.join(''); }
 HTMLTagChars = [a-zA-Z0-9\-\:_]
