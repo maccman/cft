@@ -28,3 +28,6 @@ exports.inspectString = (string) ->
       code = "0#{code}" if code.length is 1
       "\\u00#{code}"
   "'" + contents.replace(/'/g, '\\\'') + "'"
+
+exports.inspect = (value) ->
+  JSON.stringify(value)

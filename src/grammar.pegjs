@@ -21,8 +21,8 @@ ECOEND =
 
 // <% %>
 ECOExpression =
-  ECOOpen _ cont:ECOTagChars? indent:ECOIndent _ ECOClose
-  { return { type: 'eco', tag: 'expression', content: cont, indent: indent }}
+  ECOOpen _ dedent:ECODedent cont:ECOTagChars? indent:ECOIndent _ ECOClose
+  { return { type: 'eco', tag: 'expression', content: cont, indent: indent, dedent: dedent }}
 
 // <%= %>
 ECOEscapedContent =
@@ -40,6 +40,8 @@ ECOTagChar = !(":"? _ "%>") c:char { return c; }
 ECOTagChars = c:(ECOTagChar+) { return c.join(''); }
 
 ECOIndent = indent:':'? { return !!indent }
+ECODedentKeywords = present:(&'when' / &'else' / &'catch' / &'finally') { return present == '' }
+ECODedent = dedent:ECODedentKeywords? { return !!dedent }
 ECOOpen   = '<%'
 ECOClose  = '%>'
 
@@ -51,9 +53,9 @@ HTMLNodes = (c:HTMLNode _ { return c; })*
 HTMLNode = HTMLDoctype / HTMLCDATA / HTMLComment / HTMLScript / HTMLStyle / HTMLElement / HTMLText
 
 HTMLAttribute "element attribute"
-  = t:HTMLTag _ '=' _ v:HTMLValue _ { return { attr: t, value: v } }
-  / t:HTMLTag v:(HTMLValueDoubleQuoted / HTMLValueQuoted) { return { attr: t, value: v } }
-  / t:HTMLTag _ { return { attr: t }}
+  = t:HTMLTag _ '=' _ v:HTMLValue _ { return { name: t, value: v } }
+  / t:HTMLTag v:(HTMLValueDoubleQuoted / HTMLValueQuoted) { return { name: t, value: v } }
+  / t:HTMLTag _ { return { name: t }}
   / ECONode
 
 // CDATA

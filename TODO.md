@@ -1,12 +1,23 @@
 <% observe @post => %>
   <!-- Run whenever post changes -->
+
+  <span><%= @post.get('name') %></span>
 <% end %>
 
 
-<% observe posts = Post.all() => %>
+<% observeEach posts = Post.all() (post) => %>
   <!-- Run whenever we create/update/change a post -->
 <% end %>
 
+
+
+
+
+
+
+
+
+------------
 
 var __out = document.createFragment();
 

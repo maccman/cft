@@ -8,7 +8,8 @@ exports.precompile = precompile = (source) ->
   """
     function(__obj) {
       if (!__obj) __obj = {};
-      var __out = [], __capture = function(callback) {
+      var __out = [],
+      __capture = function(callback) {
         var out = __out, result;
         __out = [];
         callback.call(this);
@@ -50,6 +51,3 @@ exports.precompile = precompile = (source) ->
       return __out.join('');
     }
   """
-
-exports.compile = (source) ->
-  do new Function "return #{precompile source}"
