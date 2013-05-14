@@ -2,52 +2,34 @@ CoffeeScript = require "coffee-script"
 {preprocess} = require "./preprocessor"
 {indent}     = require "./util"
 
-exports.precompile = precompile = (source) ->
-  script = CoffeeScript.compile preprocess(source), noWrap: true
+exports.compile = compile = (source) ->
+  script = CoffeeScript.compile preprocess(source), bare: true
 
   """
     function(__obj) {
-      if (!__obj) __obj = {};
-      var __out = [],
-      __capture = function(callback) {
-        var out = __out, result;
-        __out = [];
-        callback.call(this);
-        result = __out.join('');
-        __out = out;
-        return __safe(result);
-      }, __sanitize = function(value) {
-        if (value && value.ecoSafe) {
+      var sanitize = function(value) {
+        if (value && value.cftSafe) {
           return value;
-        } else if (typeof value !== 'undefined' && value != null) {
+        } else if (value != null) {
           return __escape(value);
         } else {
-          return '';
+          return "";
         }
-      }, __safe, __objSafe = __obj.safe, __escape = __obj.escape;
-      __safe = __obj.safe = function(value) {
-        if (value && value.ecoSafe) {
-          return value;
-        } else {
-          if (!(typeof value !== 'undefined' && value != null)) value = '';
-          var result = new String(value);
-          result.ecoSafe = true;
-          return result;
-        }
+      }, escape = function(value) {
+        return ("" + value).replace(/&/g, "&amp;")
+                           .replace(/</g, "&lt;")
+                           .replace(/>/g, "&gt;")
+                           .replace(/\x22/g, "&quot;");
+      }, createFragment = function(value, element) {
+        element || (element = document.createElement('div'));
+        var range = document.createRange();
+        range.setStart(element, 0);
+        range.collapse(false);
+        return range.createContextualFragment(value);
       };
-      if (!__escape) {
-        __escape = __obj.escape = function(value) {
-          return ('' + value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\x22/g, '&quot;');
-        };
-      }
-      (function() {
-    #{indent script, 4}
+
+      return (function() {
+      #{indent script, 4}
       }).call(__obj);
-      __obj.safe = __objSafe, __obj.escape = __escape;
-      return __out.join('');
     }
   """

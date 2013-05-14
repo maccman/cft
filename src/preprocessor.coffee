@@ -12,19 +12,15 @@ module.exports = class Preprocessor
     @level    = 0
     @index    = 0
 
-    @record "#{@scope()} = document.createDocumentFragment()"
+    @record "#{@elementVar()} = document.createDocumentFragment()"
 
   preprocess: ->
     for token in @scanner.scan()
-      callback   = @["#{token.type}_#{token.tag}"]
-      callback or= @["#{token.type}"]
-      callback?.call(this, token)
+      @[token.type]?.call(this, token)
+    @record "return #{@elementVar()}"
     @output
 
   # Private
-
-  scope: (index = @index) ->
-    "__element#{index}"
 
   record: (line) ->
     @output += util.repeat "  ", @level
@@ -37,16 +33,47 @@ module.exports = class Preprocessor
     @level--
     @fail 'Unexpected dedent' if @level < 0
 
+  elementVar: (index = @index) ->
+    "__element#{index}"
+
+  traverseUp: ->
+    @index--
+
+  traverseDown: ->
+    @index++
+
+  append: (code) ->
+    @record "#{@elementVar()}.appendChild(#{code})"
+
+  appendParent: (code) ->
+    @record "#{@elementVar @index-1}.appendChild(#{code})"
+
+  capture: (token, callback) ->
+    if token.dedent
+      @dedent()
+
+    if token.directive
+      @record "parentNode = #{@elementVar()}"
+
+    callback.call(this, token)
+
+    if token.indent or token.directive
+      @indent()
+
+    if token.directive
+      @traverseDown()
+      @record "#{@elementVar()} = document.createDocumentFragment()"
+      @appendParent @elementVar()
+
   fail: (msg) ->
     throw new Error(msg)
 
-  append: (code) ->
-    @record "#{@scope @index}.appendChild(#{code})"
-
-  appendParent: (code) ->
-    @record "#{@scope @index-1}.appendChild(#{code})"
+  eco: (token) ->
+    @["eco_#{token.tag}"].call(this, token)
 
   eco_end: (token) ->
+    @record "#{@elementVar()}"
+    @traverseUp()
     @dedent()
 
   eco_leftLiteral: (token) ->
@@ -56,15 +83,16 @@ module.exports = class Preprocessor
     @append "document.createTextNode('%>')"
 
   eco_expression: (token) ->
-    @dedent() if token.dedent
-    @record token.content
-    @indent() if token.indent
+    @capture token, =>
+      @record token.content + token.directive
 
   eco_escapedContent: (token) ->
-    @append "document.createTextNode(#{token.content})"
+    @capture token, =>
+      @append "document.createTextNode sanitize #{token.content}"
 
   eco_content: (token) ->
-    @append "__makeFragment(#{token.content})"
+    @capture token, =>
+      @append "createFragment #{token.content}"
 
   cdata: (token) ->
     # Strip cdata
@@ -82,17 +110,17 @@ module.exports = class Preprocessor
     @["element_#{token.variant}"].call(this, token)
 
   element_open: (token) ->
-    scope = @scope(++@index)
+    element = @elementVar(++@index)
 
-    @record "#{scope} = document.createElement(#{util.inspect token.tag})"
+    @record "#{element} = document.createElement(#{util.inspect token.tag})"
 
     for attr in token.attributes
-      @record "#{scope}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
+      @record "#{element}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
 
-    @appendParent(scope)
+    @appendParent(element)
 
   element_close: (token) ->
-    @index--
+    @traverseUp()
 
   element_inline: (token) ->
     @record "__curr = document.createElement(#{util.inspect token.tag})"

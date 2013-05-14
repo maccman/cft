@@ -11,6 +11,11 @@
 
 
 
+<% div = (contents) => %>
+   <div><%- contents %></div>
+<% end %>
+<%= div "Hello" %>
+
 
 
 

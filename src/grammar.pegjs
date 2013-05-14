@@ -21,27 +21,26 @@ ECOEND =
 
 // <% %>
 ECOExpression =
-  ECOOpen _ dedent:ECODedent cont:ECOTagChars? indent:ECOIndent _ ECOClose
-  { return { type: 'eco', tag: 'expression', content: cont, indent: indent, dedent: dedent }}
+  ECOOpen _ cont:ECOTagChars? directive:ECODirective? indent:ECOIndent? _ ECOClose
+  { return { type: 'eco', tag: 'expression', content: cont, directive: directive, indent: indent }}
 
 // <%= %>
 ECOEscapedContent =
-  ECOOpen '=' _ cont:ECOTagChars _ ECOClose
-  { return { type: 'eco', tag: 'escapedContent', content: cont }}
+  ECOOpen '=' _ cont:ECOTagChars directive:ECODirective? indent:ECOIndent? _ ECOClose
+  { return { type: 'eco', tag: 'escapedContent', content: cont, directive: directive, indent: indent }}
 
 // <%- %>
 ECOContent =
-  ECOOpen '-' _ cont:ECOTagChars _ ECOClose
-  { return { type: 'eco', tag: 'content', content: cont }}
+  ECOOpen '-' _ cont:ECOTagChars directive:ECODirective? indent:ECOIndent? _ ECOClose
+  { return { type: 'eco', tag: 'content', content: cont, directive: directive, indent: indent }}
 
 // ECO Utilities
 
-ECOTagChar = !(":"? _ "%>") c:char { return c; }
+ECOTagChar = !("->" / "=>" / ":" / _ "%>") c:char { return c; }
 ECOTagChars = c:(ECOTagChar+) { return c.join(''); }
 
 ECOIndent = indent:':'? { return !!indent }
-ECODedentKeywords = present:(&'when' / &'else' / &'catch' / &'finally') { return present == '' }
-ECODedent = dedent:ECODedentKeywords? { return !!dedent }
+ECODirective = "=>" / "->"
 ECOOpen   = '<%'
 ECOClose  = '%>'
 
