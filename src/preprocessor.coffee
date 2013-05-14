@@ -10,8 +10,9 @@ module.exports = class Preprocessor
     @scanner  = new Scanner source
     @output   = ""
     @level    = 0
-    @options  = {}
-    @captures = []
+    @index    = 0
+
+    @record "#{@scope()} = document.createDocumentFragment()"
 
   preprocess: ->
     for token in @scanner.scan()
@@ -21,6 +22,9 @@ module.exports = class Preprocessor
     @output
 
   # Private
+
+  scope: (index = @index) ->
+    "__element#{index}"
 
   record: (line) ->
     @output += util.repeat "  ", @level
@@ -36,14 +40,20 @@ module.exports = class Preprocessor
   fail: (msg) ->
     throw new Error(msg)
 
+  append: (code) ->
+    @record "#{@scope @index}.appendChild(#{code})"
+
+  appendParent: (code) ->
+    @record "#{@scope @index-1}.appendChild(#{code})"
+
   eco_end: (token) ->
     @dedent()
 
   eco_leftLiteral: (token) ->
-    @record "__frag.appendChild(document.createTextNode('<%'))"
+    @append "document.createTextNode('<%')"
 
   eco_rightLiteral: (token) ->
-    @record "__frag.appendChild(document.createTextNode('%>'))"
+    @append "document.createTextNode('%>')"
 
   eco_expression: (token) ->
     @dedent() if token.dedent
@@ -51,10 +61,10 @@ module.exports = class Preprocessor
     @indent() if token.indent
 
   eco_escapedContent: (token) ->
-    @record "__frag.appendChild(document.createTextNode(#{token.content}))"
+    @append "document.createTextNode(#{token.content})"
 
   eco_content: (token) ->
-    @record "__frag.appendChild(__makeFragment(#{token.content}))"
+    @append "__makeFragment(#{token.content})"
 
   cdata: (token) ->
     # Strip cdata
@@ -69,23 +79,37 @@ module.exports = class Preprocessor
     # Noop
 
   element: (token) ->
+    @["element_#{token.variant}"].call(this, token)
+
+  element_open: (token) ->
+    scope = @scope(++@index)
+
+    @record "#{scope} = document.createElement(#{util.inspect token.tag})"
+
+    for attr in token.attributes
+      @record "#{scope}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
+
+    @appendParent(scope)
+
+  element_close: (token) ->
+    @index--
+
+  element_inline: (token) ->
     @record "__curr = document.createElement(#{util.inspect token.tag})"
 
     for attr in token.attributes
       @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
 
-    @record "__frag.appendChild __curr"
-    variant
-    attributes
+    @append("__curr")
 
   style: (token) ->
     @record "__curr = document.createElement('style')"
-    @record "__curr.innerHTML = #{util.inspect token.content}"
 
     for attr in token.attributes
       @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
 
-    @record "__frag.appendChild __curr"
+    @record "__curr.innerHTML = #{util.inspect token.content}"
+    @append "__curr"
 
   text: (token) ->
-    @record "__frag.appendChild document.createTextNode(#{util.inspect token.content})"
+    @append "document.createTextNode(#{util.inspect token.content})"

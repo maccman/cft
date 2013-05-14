@@ -115,8 +115,8 @@ HTMLStyle "element <style>" =
 // Text
 
 HTMLText
-  = cont:(HTMLContentChars)+
-  { return { type: 'text', content: cont }}
+  = cont:(HTMLContentChar)+
+  { return { type: 'text', content: cont.join('') }}
 
 // HTML Utilities
 

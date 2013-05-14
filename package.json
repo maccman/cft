@@ -1,0 +1,19 @@
+{
+  "name": "cft",
+  "description": "CoffeScript fragment templates",
+  "author": "Alex MacCaw",
+  "version": "0.0.1",
+  "licenses": [
+    { "type": "MIT", "url": "https://github.com/maccman/cft/raw/master/LICENSE"}
+  ],
+  "main": "./lib/index.js",
+  "bin": "./bin/cft",
+  "repository": { "type": "git", "url": "http://github.com/maccman/cft.git" },
+  "dependencies":{
+    "coffee-script": ">=1.6.2"
+  },
+  "devDependencies": {
+    "mocha": ">=1.9.0",
+    "pegjs": ">=0.7.0"
+  }
+}

@@ -3,6 +3,7 @@
 run = (command, callback) ->
   exec command, (err, stdout, stderr) ->
     console.warn stderr if stderr
+    console.log stdout if stdout
     callback?() unless err
 
 build = (callback) ->
@@ -14,3 +15,7 @@ bundle = (callback) ->
 
 task "build", "Build lib/ from src/", ->
   build()
+
+task "test", "Run tests", ->
+  build ->
+    run 'mocha --compilers coffee:coffee-script'
