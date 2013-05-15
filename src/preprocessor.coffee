@@ -53,9 +53,6 @@ module.exports = class Preprocessor
     if token.dedent
       @dedent()
 
-    if token.directive
-      @record "parentNode = #{@elementVar()}"
-
     callback.call(this, token)
 
     if token.indent or token.directive

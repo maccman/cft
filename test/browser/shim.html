@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <script>
+
+  </script>
+  <script src="../../lib/observe.js"></script>
+  <script src="template.js"></script>
+</head>
+<body>
+  <script>
+    var ObservedObject = function(props) {
+      var object = Object.create(cftTemplates.ObservedObject);
+      for (var key in props) {
+        object[key] = props[key];
+      }
+      return object;
+    };
+
+    user = new ObservedObject({
+      name: 'Alex'
+    });
+
+    project = new ObservedObject({
+      id: 1,
+      name: "Another project",
+      users: [user]
+    });
+
+    var context = {
+      project: project,
+      observe: cftTemplates.observe,
+      observeEach: cftTemplates.observeEach
+    }
+    document.body.appendChild(cftTemplates.template(context));
+  </script>
+</body>
+</html>

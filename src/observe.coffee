@@ -7,8 +7,7 @@ toArray = (value) ->
   Array::slice.call(value, 0)
 
 ObjectObserve = (object, callback) ->
-  Object.observe?(object, callback)
-  object.observe?(callback)
+  Object.observe?(object, callback) or object.observe?(callback)
 
 exports.observe = observe = (object, callback) ->
   nodes = []
@@ -94,5 +93,13 @@ exports.observeEach = observeEach = (array, callback) ->
 
   fragment
 
+exports.ObservedObject =
+  observe: (callback) ->
+    handlers = @hasOwnProperty('observeHandlers') and @observeHandlers or= []
 
-
+    if typeof callback is 'function'
+      handlers.push(callback)
+    else
+      args = arguments
+      args = [[{object: this, type: 'updated'}]] unless args.length
+      handle(args...) for handle in handlers
