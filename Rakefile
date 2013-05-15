@@ -3,6 +3,7 @@ task :gem do
   sh "cake dist"
 
   require "json"
+  require "fileutils"
   require "rubygems"
   require "rubygems/package"
 
@@ -23,7 +24,9 @@ task :gem do
     s.email       = "info@eribium.org"
   end
 
-  file = File.open("cft-source-#{gemspec.version}.gem", "w")
+  FileUtils.mkdir_p("pkg")
+
+  file = File.open("pkg/cft-source-#{gemspec.version}.gem", "w")
   Gem::Package.open(file, "w") do |pkg|
     pkg.metadata = gemspec.to_yaml
 
