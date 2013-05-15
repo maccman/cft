@@ -31,5 +31,5 @@ exports.precompile = precompile = (source) ->
     }
   """
 
-exports.compile = ->
-  throw new Error('Compilation happens in the browser')
+exports.compile = (source) ->
+  do new Function "return #{precompile source}"
