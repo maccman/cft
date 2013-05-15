@@ -1,7 +1,7 @@
 fs   = require "fs"
 path = require "path"
 sys  = require "util"
-eco  = require ".."
+cft  = require ".."
 
 {exec} = require "child_process"
 {indent} = require "./util"
@@ -9,13 +9,13 @@ eco  = require ".."
 printUsage = ->
   console.error """
 
-    Usage: eco [options] path/to/template.eco
+    Usage: cft [options] path/to/template.cft
 
       -i, --identifier [NAME]  set the name of the global template object
       -o, --output [DIR]       set the directory for compiled JavaScript
       -p, --print              print the compiled JavaScript to stdout
       -s, --stdio              listen for and compile templates over stdio
-      -v, --version            display Eco version
+      -v, --version            display CFT version
       -h, --help               display this help message
 
   """
@@ -23,7 +23,7 @@ printUsage = ->
 
 printVersion = ->
   pkg = JSON.parse fs.readFileSync __dirname + "/../package.json", "utf8"
-  console.error "Eco version #{pkg.version}"
+  console.error "CFT version #{pkg.version}"
   process.exit 0
 
 preprocessArgs = (args) ->
@@ -37,7 +37,7 @@ preprocessArgs = (args) ->
   result
 
 parseOptions = (args) ->
-  options = files: [], identifier: "ecoTemplates"
+  options = files: [], identifier: "cftTemplates"
   option = null
 
   for arg in preprocessArgs args
@@ -74,7 +74,7 @@ eachFile = (files, callback) ->
         file = path.join dir, entry
         fs.stat file, (err, stat) ->
           return callback err if err
-          if stat.isFile() and /\.eco$/.test file
+          if stat.isFile() and /\.cft$/.test file
             callback null, file, root, proceed
           else if stat.isDirectory()
             traverse root, file, proceed
@@ -92,12 +92,12 @@ eachFile = (files, callback) ->
         callback null, file, root, proceed
 
 stripExtension = (name) ->
-  name.replace /(\.eco)?$/, ""
+  name.replace /(\.cft)?$/, ""
 
 compile = (infile, identifier, name, callback) ->
   fs.readFile infile, "utf8", (err, source) ->
     return callback err if err
-    template = indent eco.precompile(source), 2
+    template = indent cft.precompile(source), 2
 
     callback null, """
       (function() {
@@ -134,7 +134,7 @@ exports.run = (args = process.argv.slice 2) ->
     printUsage() if options.files.length or options.output
     process.openStdin()
     read process.stdin, (source) ->
-      sys.puts eco.precompile source
+      sys.puts cft.precompile source
 
   else if options.print
     printUsage() if options.files.length isnt 1 or options.output

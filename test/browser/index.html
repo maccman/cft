@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <script>
+
+  </script>
+  <script src="../../lib/observe.js"></script>
+  <script src="template.js"></script>
+</head>
+<body>
+  <script>
+    user = {
+      name: 'Alex'
+    }
+
+    project = {
+      id: 1,
+      name: "Another project",
+      users: [user]
+    }
+
+    var context = {
+      project: project,
+      observe: cftTemplates.observe,
+      observeEach: cftTemplates.observeEach
+    }
+    document.body.appendChild(cftTemplates.template(context));
+  </script>
+</body>
+</html>

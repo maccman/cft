@@ -1,0 +1,10 @@
+
+<h1>Template</h1>
+
+<%- @observe @project, => %>
+  <p>Project Name: <%= @project.name %></p>
+<% end %>
+
+<%- @observeEach @project.users, (user) => %>
+  <p>User name: <%= user.name %></p>
+<% end %>

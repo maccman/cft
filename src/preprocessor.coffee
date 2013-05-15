@@ -11,6 +11,7 @@ module.exports = class Preprocessor
     @output   = ""
     @level    = 0
     @index    = 0
+    @captures = []
 
     @record "#{@elementVar()} = document.createDocumentFragment()"
 
@@ -43,10 +44,10 @@ module.exports = class Preprocessor
     @index++
 
   append: (code) ->
-    @record "#{@elementVar()}.appendChild(#{code})"
+    @record "#{@elementVar()}.appendChild #{code}"
 
   appendParent: (code) ->
-    @record "#{@elementVar @index-1}.appendChild(#{code})"
+    @record "#{@elementVar @index-1}.appendChild #{code}"
 
   capture: (token, callback) ->
     if token.dedent
@@ -61,9 +62,9 @@ module.exports = class Preprocessor
       @indent()
 
     if token.directive
+      @captures.unshift @level
       @traverseDown()
       @record "#{@elementVar()} = document.createDocumentFragment()"
-      @appendParent @elementVar()
 
   fail: (msg) ->
     throw new Error(msg)
@@ -72,7 +73,9 @@ module.exports = class Preprocessor
     @["eco_#{token.tag}"].call(this, token)
 
   eco_end: (token) ->
-    @record "#{@elementVar()}"
+    if @captures[0] is @level
+      @captures.shift()
+      @record(@elementVar())
     @traverseUp()
     @dedent()
 
@@ -87,12 +90,13 @@ module.exports = class Preprocessor
       @record token.content + token.directive
 
   eco_escapedContent: (token) ->
+    @fail 'Directive provided for escaped content' if token.directive
     @capture token, =>
-      @append "document.createTextNode sanitize #{token.content}"
+      @append "document.createTextNode __escape #{token.content}"
 
   eco_content: (token) ->
     @capture token, =>
-      @append "createFragment #{token.content}"
+      @append "__createFragment #{token.content}" + token.directive
 
   cdata: (token) ->
     # Strip cdata
