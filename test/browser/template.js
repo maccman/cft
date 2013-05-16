@@ -31,7 +31,7 @@
       
       __element0.appendChild(__element1);
       
-      __element1.appendChild(document.createTextNode("Template"));
+      __element1.appendChild(document.createTextNode("Project"));
       
       parentNode = __element0;
       
@@ -45,6 +45,12 @@
         __element2.appendChild(document.createTextNode(__escape(_this.project.name)));
         return __element1;
       })));
+      
+      __element1 = document.createElement("h2");
+      
+      __element0.appendChild(__element1);
+      
+      __element1.appendChild(document.createTextNode("Users"));
       
       parentNode = __element0;
       
