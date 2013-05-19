@@ -1,5 +1,5 @@
 /**
- * CFT Compiler v0.0.1
+ * CFT Compiler v0.0.2
  * http://github.com/maccman/cft
  *
  * Copyright (c) 2013 Alex MacCaw
