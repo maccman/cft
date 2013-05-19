@@ -107,16 +107,28 @@ module.exports = class Preprocessor
   script: (token) ->
     # Noop
 
+  # As defined in the HTML spec
+  # - http://www.w3.org/TR/html-markup/syntax.html#syntax-elements
+  voidElements: [
+    'area','base','br','col','command','embed',
+    'hr','img','input','keygen','link','meta',
+    'param','source','track','wbr'
+  ]
+
   element: (token) ->
-    @["element_#{token.variant}"].call(this, token)
+    if token.tag in @voidElements
+      @element_inline(token)
+    else
+      @["element_#{token.variant}"].call(this, token)
 
   element_open: (token) ->
-    element = @elementVar(++@index)
+    @traverseDown()
 
+    element = @elementVar()
     @record "#{element} = document.createElement(#{util.inspect token.tag})"
 
     for attr in token.attributes
-      @record "#{element}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
+      @record "#{element}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
 
     @appendParent(element)
 
@@ -127,7 +139,7 @@ module.exports = class Preprocessor
     @record "__curr = document.createElement(#{util.inspect token.tag})"
 
     for attr in token.attributes
-      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
+      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
 
     @append("__curr")
 
@@ -135,7 +147,7 @@ module.exports = class Preprocessor
     @record "__curr = document.createElement('style')"
 
     for attr in token.attributes
-      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value})"
+      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
 
     @record "__curr.innerHTML = #{util.inspect token.content}"
     @append "__curr"

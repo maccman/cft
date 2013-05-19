@@ -1,0 +1,13 @@
+<header>
+  <a class="logo about">B</a>
+
+  <nav>
+    <a class="popular active" data-state="popular" title="Popular"></a>
+    <a class="newest" data-state="newest" title="Newest"></a>
+  </nav>
+
+  <input type="search" tabindex="1" incremental>
+</header>
+
+<section class="list posts-list posts-popular state" data-state="popular">
+</section>
