@@ -20,7 +20,8 @@
     };
   
     return (function() {
-        var __curr, __element0, __element1, __element2, __element3;
+        var __curr, __element0, __element1, __element2, __element3,
+        _this = this;
       
       __element0 = document.createDocumentFragment();
       
@@ -77,6 +78,14 @@
       __element1.setAttribute("data-state", "popular");
       
       __element0.appendChild(__element1);
+      
+      __element1.appendChild(__createFragment(this.helpers.observe(this.popularPosts, function() {
+        __element2 = document.createDocumentFragment();
+        __element2.appendChild(__createFragment(_this.view('posts/items')({
+          posts: _this.popularPosts
+        })));
+        return __element2;
+      })));
       
       return __element0;
       

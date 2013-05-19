@@ -10,4 +10,7 @@
 </header>
 
 <section class="list posts-list posts-popular state" data-state="popular">
+  <%- @helpers.observe @popularPosts, => %>
+    <%- @view('posts/items')(posts: @popularPosts) %>
+  <% end %>
 </section>

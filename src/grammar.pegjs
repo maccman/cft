@@ -21,22 +21,22 @@ ECOEND =
 
 // <% %>
 ECOExpression =
-  ECOOpen _ cont:ECOTagChars? directive:ECODirective? indent:ECOIndent? _ ECOClose
-  { return { type: 'eco', tag: 'expression', content: cont, directive: directive, indent: indent }}
+  ECOOpen _ cont:ECOTagChars? indent:ECOIndent? directive:ECODirective? _ ECOClose
+  { return { type: 'eco', tag: 'expression', content: cont, indent: indent, directive: directive }}
 
 // <%= %>
 ECOEscapedContent =
-  ECOOpen '=' _ cont:ECOTagChars directive:ECODirective? indent:ECOIndent? _ ECOClose
-  { return { type: 'eco', tag: 'escapedContent', content: cont, directive: directive, indent: indent }}
+  ECOOpen '=' _ cont:ECOTagChars indent:ECOIndent? directive:ECODirective? _ ECOClose
+  { return { type: 'eco', tag: 'escapedContent', content: cont, indent: indent, directive: directive }}
 
 // <%- %>
 ECOContent =
-  ECOOpen '-' _ cont:ECOTagChars directive:ECODirective? indent:ECOIndent? _ ECOClose
-  { return { type: 'eco', tag: 'content', content: cont, directive: directive, indent: indent }}
+  ECOOpen '-' _ cont:ECOTagChars indent:ECOIndent? directive:ECODirective? _ ECOClose
+  { return { type: 'eco', tag: 'content', content: cont, indent: indent, directive: directive }}
 
 // ECO Utilities
 
-ECOTagChar = !("->" / "=>" / ":" / _ "%>") c:char { return c; }
+ECOTagChar = !(":"? "->"? "=>"? _ "%>") c:char { return c; }
 ECOTagChars = c:(ECOTagChar+) { return c.join(''); }
 
 ECOIndent = indent:':'? { return !!indent }
