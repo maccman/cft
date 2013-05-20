@@ -80,10 +80,20 @@
       __element0.appendChild(__element1);
       
       __element1.appendChild(__createFragment(this.helpers.observe(this.popularPosts, function() {
+        var post, _i, _len, _ref;
+      
         __element2 = document.createDocumentFragment();
-        __element2.appendChild(__createFragment(_this.view('posts/items')({
-          posts: _this.popularPosts
-        })));
+        _ref = _this.popularPosts;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          post = _ref[_i];
+          __element2.appendChild(__createFragment(_this.helpers.observe(post, function() {
+            __element3 = document.createDocumentFragment();
+            __element3.appendChild(__createFragment(_this.view('posts/item')({
+              post: post
+            })));
+            return __element3;
+          })));
+        }
         return __element2;
       })));
       

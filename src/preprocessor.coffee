@@ -39,6 +39,7 @@ module.exports = class Preprocessor
 
   traverseUp: ->
     @index--
+    @fail 'Unexpected traverse' if @index < 0
 
   traverseDown: ->
     @index++
@@ -73,7 +74,7 @@ module.exports = class Preprocessor
     if @captures[0] is @level
       @captures.shift()
       @record(@elementVar())
-    @traverseUp()
+      @traverseUp()
     @dedent()
 
   eco_leftLiteral: (token) ->
