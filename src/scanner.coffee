@@ -2,16 +2,24 @@ grammar = require('./grammar')
 
 module.exports = class Scanner
   @scan: (source) ->
+    @scanNodes(source)
+
+  @scanNodes: (source) ->
     tokens  = []
     scanner = new Scanner source
-    scanner.scan()
+    scanner.scan('NODES')
+
+  @scanString: (source) ->
+    tokens  = []
+    scanner = new Scanner source
+    scanner.scan('STRING')
 
   @dedentablePattern: /^(end|when|else|catch|finally)(?:\W|$)/
 
   constructor: (@source) ->
 
-  scan: ->
-    for token in grammar.parse(@source)
+  scan: (type) ->
+    for token in grammar.parse(@source, type)
       @[token.type]?.call(this, token) or token
 
   # Private

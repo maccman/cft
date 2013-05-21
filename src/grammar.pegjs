@@ -1,7 +1,12 @@
 start = NODES
 
+// For parsing HTML/ECO
 NODES = (c:NODE _ { return c; })*
-NODE  = node:ECONode / HTMLNode
+NODE  = ECONode / HTMLNode
+
+// For parsing String/ECO
+STRING = (c:STRING_NODE _ { return c; })*
+STRING_NODE = ECONode / ECOString
 
 // ECO
 
@@ -34,15 +39,23 @@ ECOContent =
   ECOOpen '-' _ cont:ECOTagChars indent:ECOIndent? directive:ECODirective? _ ECOClose
   { return { type: 'eco', tag: 'content', content: cont, indent: indent, directive: directive }}
 
+// Strings
+
+ECOString
+  = cont:(ECOStringChar)+
+  { return { type: 'eco', tag: 'string', content: cont.join('') }}
+
 // ECO Utilities
 
 ECOTagChar = !(":"? "->"? "=>"? _ "%>") c:char { return c; }
 ECOTagChars = c:(ECOTagChar+) { return c.join(''); }
 
+ECOStringChar = !("</" / "<") c:char { return c; }
+
 ECOIndent = indent:':'? { return !!indent }
 ECODirective = "=>" / "->"
-ECOOpen   = '<%'
-ECOClose  = '%>'
+ECOOpen = '<%'
+ECOClose = '%>'
 
 // HTML
 
