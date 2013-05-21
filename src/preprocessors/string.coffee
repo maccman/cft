@@ -11,22 +11,26 @@ module.exports = class Preprocessor
     @level    = 0
     @index    = 0
     @captures = []
-    @record '__out = []'
+
+    @record "#{@outVar()} = []"
 
   preprocess: ->
     for token in Scanner.scanString(@source)
       @[token.type]?.call(this, token)
-    @record '__out.join("")'
+    @record "return #{@outVar()}.join('')"
     @output
 
   # Private
+
+  outVar: (index = @index) ->
+    "__out#{index}"
 
   record: (line) ->
     @output += util.repeat "  ", @level
     @output += line + "\n"
 
   append: (string) ->
-    @record "__out.push #{string}"
+    @record "#{@outVar()}.push #{string}"
 
   indent: ->
     @level++
@@ -35,24 +39,29 @@ module.exports = class Preprocessor
     @level--
     @fail 'Unexpected dedent' if @level < 0
 
+  traverseUp: ->
+    @index--
+    @fail 'Unexpected traverse' if @index < 0
+
+  traverseDown: ->
+    @index++
+
   fail: (msg) ->
     throw new Error(msg)
 
-  capture: (token, callback) ->
+  eco: (token) ->
     if token.dedent
       @dedent()
 
-    callback.call(this, token)
+    @["eco_#{token.tag}"].call(this, token)
 
     if token.indent or token.directive
       @indent()
 
     if token.directive
       @captures.unshift @level
-      @record "__out = []"
-
-  eco: (token) ->
-    @["eco_#{token.tag}"].call(this, token)
+      @traverseDown()
+      @record "#{@outVar()} = []"
 
   eco_string: (token) ->
     string = token.content
@@ -61,7 +70,8 @@ module.exports = class Preprocessor
   eco_end: (token) ->
     if @captures[0] is @level
       @captures.shift()
-      @record '__out.join("")'
+      @record "#{@outVar()}.join('')"
+      @traverseUp()
     @dedent()
 
   eco_leftLiteral: (token) ->
@@ -71,13 +81,13 @@ module.exports = class Preprocessor
     @append util.inspectString('%>')
 
   eco_expression: (token) ->
-    @capture token, ->
-      @record token.content
+    @record token.content + token.directive
 
   eco_escapedContent: (token) ->
-    @capture token, ->
-      @append token.content
+    if token.directive
+      @append "#{token.content} __escape #{token.directive}"
+    else
+      @append "__escape #{token.content}"
 
   eco_content: (token) ->
-    @capture token, ->
-      @append token.content
+    @append token.content + token.directive

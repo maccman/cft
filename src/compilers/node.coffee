@@ -1,6 +1,6 @@
 CoffeeScript = require "coffee-script"
-{preprocess} = require "./preprocessor"
-{indent}     = require "./util"
+{preprocess} = require "../preprocessors/node"
+{indent}     = require "../util"
 
 exports.precompile = precompile = (source) ->
   script = CoffeeScript.compile preprocess(source), bare: true
@@ -14,7 +14,7 @@ exports.precompile = precompile = (source) ->
                            .replace(/</g, "&lt;")
                            .replace(/>/g, "&gt;")
                            .replace(/\x22/g, "&quot;");
-      }
+      };
 
       var __createFragment = __obj.createFragment = function(value, element) {
         if (value instanceof DocumentFragment) return value;

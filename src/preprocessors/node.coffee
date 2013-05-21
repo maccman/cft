@@ -1,5 +1,6 @@
 Scanner = require "../scanner"
 util    = require "../util"
+String  = require("./string")
 
 module.exports = class Preprocessor
   @preprocess: (source) ->
@@ -49,11 +50,14 @@ module.exports = class Preprocessor
   appendParent: (code) ->
     @record "#{@elementVar @index-1}.appendChild #{code}"
 
-  capture: (token, callback) ->
+  fail: (msg) ->
+    throw new Error(msg)
+
+  eco: (token) ->
     if token.dedent
       @dedent()
 
-    callback.call(this, token)
+    @["eco_#{token.tag}"].call(this, token)
 
     if token.indent or token.directive
       @indent()
@@ -62,12 +66,6 @@ module.exports = class Preprocessor
       @captures.unshift @level
       @traverseDown()
       @record "#{@elementVar()} = document.createDocumentFragment()"
-
-  fail: (msg) ->
-    throw new Error(msg)
-
-  eco: (token) ->
-    @["eco_#{token.tag}"].call(this, token)
 
   eco_end: (token) ->
     if @captures[0] is @level
@@ -83,17 +81,16 @@ module.exports = class Preprocessor
     @append "document.createTextNode('%>')"
 
   eco_expression: (token) ->
-    @capture token, =>
-      @record token.content + token.directive
+    @record token.content + token.directive
 
   eco_escapedContent: (token) ->
-    @fail 'Directive provided for escaped content' if token.directive
-    @capture token, =>
+    if token.directive
+      @fail 'Directive provided for escaped content'
+    else
       @append "document.createTextNode __escape #{token.content}"
 
   eco_content: (token) ->
-    @capture token, =>
-      @append "__createFragment #{token.content}" + token.directive
+    @append "__createFragment #{token.content + token.directive}"
 
   cdata: (token) ->
     # Strip cdata
@@ -126,10 +123,7 @@ module.exports = class Preprocessor
 
     element = @elementVar()
     @record "#{element} = document.createElement(#{util.inspect token.tag})"
-
-    for attr in token.attributes
-      @record "#{element}.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
-
+    @recordElementAttributes(element, token.attributes)
     @appendParent(element)
 
   element_close: (token) ->
@@ -137,20 +131,25 @@ module.exports = class Preprocessor
 
   element_inline: (token) ->
     @record "__curr = document.createElement(#{util.inspect token.tag})"
-
-    for attr in token.attributes
-      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
-
-    @append("__curr")
+    @recordElementAttributes("_curr", token.attributes)
+    @append "__curr"
 
   style: (token) ->
     @record "__curr = document.createElement('style')"
-
-    for attr in token.attributes
-      @record "__curr.setAttribute(#{util.inspect attr.name}, #{util.inspect attr.value or true})"
-
+    @recordElementAttributes("_curr", token.attributes)
     @record "__curr.innerHTML = #{util.inspect token.content}"
     @append "__curr"
 
   text: (token) ->
     @append "document.createTextNode(#{util.inspect token.content})"
+
+  recordElementAttributes: (element, attributes) ->
+    for attr in attributes
+      @recordElementAttribute(element, attr.name, attr.value)
+
+  recordElementAttribute: (element, name, value = '') ->
+    if value.match /<%/
+      @record "__value = do -> (#{String.preprocess(value)})"
+      @record "#{element}.setAttribute(#{util.inspect name}, __value)"
+    else
+      @record "#{element}.setAttribute(#{util.inspect name}, #{util.inspect value})"

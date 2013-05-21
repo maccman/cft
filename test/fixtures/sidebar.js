@@ -8,7 +8,7 @@
                          .replace(/</g, "&lt;")
                          .replace(/>/g, "&gt;")
                          .replace(/"/g, "&quot;");
-    }
+    };
   
     var __createFragment = __obj.createFragment = function(value, element) {
       if (value instanceof DocumentFragment) return value;
@@ -20,7 +20,7 @@
     };
   
     return (function() {
-        var __curr, __element0, __element1, __element2, __element3,
+        var __curr, __element0, __element1, __element2, __element3, __value,
         _this = this;
       
       __element0 = document.createDocumentFragment();
@@ -63,17 +63,32 @@
       
       __curr = document.createElement("input");
       
-      __curr.setAttribute("type", "search");
+      _curr.setAttribute("type", "search");
       
-      __curr.setAttribute("tabindex", "1");
+      _curr.setAttribute("tabindex", "1");
       
-      __curr.setAttribute("incremental", true);
+      _curr.setAttribute("incremental", "");
       
       __element1.appendChild(__curr);
       
       __element1 = document.createElement("section");
       
-      __element1.setAttribute("class", "list posts-list posts-popular state");
+      __value = (function() {
+        var __out0;
+      
+        __out0 = [];
+        __out0.push('list posts-list posts-popular ');
+        __out0.push(this.state(function() {
+          var __out1;
+      
+          __out1 = [];
+          __out1.push('state');
+          return __out1.join('');
+        }));
+        return __out0.join('');
+      })();
+      
+      __element1.setAttribute("class", __value);
       
       __element1.setAttribute("data-state", "popular");
       
@@ -97,7 +112,7 @@
         return __element2;
       })));
       
-      return __element0;
+      __element0;
       
     }).call(__obj);
   };

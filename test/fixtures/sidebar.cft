@@ -9,7 +9,7 @@
   <input type="search" tabindex="1" incremental>
 </header>
 
-<section class="list posts-list posts-popular state" data-state="popular">
+<section class="list posts-list posts-popular <%- @state -> %>state<% end %>" data-state="popular">
   <%- @helpers.observe @popularPosts, => %>
     <% for post in @popularPosts: %>
       <%- @helpers.observe post, => %>
