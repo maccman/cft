@@ -1,7 +1,12 @@
-<%- @helpers.observe @user, => %>
-  <% if @user.present: %>
-    <%= @user.get('name') %>
-  <% else %>
-    No user
+<footer>
+  <%- @helpers.observe @user, => %>
+    <a class="config btn profile" title="Account">
+      <% if avatar_url = @user.get('avatar_url'): %>
+        <img class="avatar" src="<%= avatar_url %>" />
+      <% end %>
+    </a>
   <% end %>
-<% end %>
+
+  <span></span>
+  <a class="add btn newPost" title="New post"></a>
+</footer>

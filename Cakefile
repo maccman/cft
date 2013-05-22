@@ -42,13 +42,17 @@ task "dist", "Generate dist/cft.js", ->
     version = JSON.parse(read "package.json").version
 
     modules =
-      "cft":              read "lib/index.js"
-      "./compiler":       read "lib/compiler.js"
-      "./preprocessor":   read "lib/preprocessor.js"
-      "./scanner":        read "lib/scanner.js"
-      "./util":           read "lib/util.js"
-      "./grammar":        read "lib/grammar.js"
-      "coffee-script":    stub "CoffeeScript"
+      "cft":                  read "lib/index.js"
+      "compiler":             read "lib/compiler.js"
+      "compilers/node":       read "lib/compilers/node.js"
+      "compilers/string":     read "lib/compilers/string.js"
+      "preprocessor":         read "lib/preprocessor.js"
+      "preprocessors/node":   read "lib/preprocessors/node.js"
+      "preprocessors/string": read "lib/preprocessors/string.js"
+      "scanner":              read "lib/scanner.js"
+      "util":                 read "lib/util.js"
+      "grammar":              read "lib/grammar.js"
+      "coffee-script":        stub "CoffeeScript"
 
     pkg = for name, source of modules
       """
@@ -67,12 +71,38 @@ task "dist", "Generate dist/cft.js", ->
        */
     """
 
-    source = uglify """
+    source = """
       this.cft = (function(modules) {
-        return function require(name) {
-          var fn, module = {id: name, exports: {}};
-          if (fn = modules[name]) {
-            fn(module, require, module.exports);
+        var dirname = function(path) {
+          return path.split('/').slice(0, -1).join('/');
+        };
+
+        var expand = function(root, name) {
+          var results = [], parts, part;
+          // If path is relative
+          if (/^\\.\\.?(\\/|$)/.test(name)) {
+            parts = [root, name].join('/').split('/');
+          } else {
+            parts = name.split('/');
+          }
+          for (var i = 0, length = parts.length; i < length; i++) {
+            part = parts[i];
+            if (part == '..') {
+              results.pop();
+            } else if (part != '.' && part != '') {
+              results.push(part);
+            }
+          }
+          return results.join('/');
+        };
+
+        return function require(name, root) {
+          var path = expand(root || '', name);
+          var fn, module = {id: path, exports: {}};
+          if (fn = modules[path]) {
+            fn(module, function(name) {
+              return require(name, dirname(path));
+            }, module.exports);
             return module.exports;
           } else {
             throw 'Cannot find module \\'' + name + '\\'';

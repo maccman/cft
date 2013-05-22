@@ -18,14 +18,15 @@ module.exports = class Preprocessor
   preprocess: ->
     for token in Scanner.scanNodes(@source)
       @[token.type]?.call(this, token)
-    @record @elementVar()
+    @record "return #{@elementVar()}"
     @output
 
   # Private
 
-  record: (line) ->
-    @output += util.repeat "  ", @level
-    @output += line + "\n"
+  record: (lines) ->
+    for line in lines.split("\n") when line
+      @output += util.repeat "  ", @level
+      @output += line + "\n"
 
   indent: ->
     @level++
@@ -131,12 +132,12 @@ module.exports = class Preprocessor
 
   element_inline: (token) ->
     @record "__curr = document.createElement(#{util.inspect token.tag})"
-    @recordElementAttributes("_curr", token.attributes)
+    @recordElementAttributes("__curr", token.attributes)
     @append "__curr"
 
   style: (token) ->
     @record "__curr = document.createElement('style')"
-    @recordElementAttributes("_curr", token.attributes)
+    @recordElementAttributes("__curr", token.attributes)
     @record "__curr.innerHTML = #{util.inspect token.content}"
     @append "__curr"
 
@@ -149,7 +150,11 @@ module.exports = class Preprocessor
 
   recordElementAttribute: (element, name, value = '') ->
     if value.match /<%/
-      @record "__value = do -> (#{String.preprocess(value)})"
+      @record "__value = do ->"
+      @indent()
+      @record String.preprocess(value)
+      @dedent()
+
       @record "#{element}.setAttribute(#{util.inspect name}, __value)"
     else
       @record "#{element}.setAttribute(#{util.inspect name}, #{util.inspect value})"

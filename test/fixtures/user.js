@@ -20,24 +20,52 @@
     };
   
     return (function() {
-        var __element0,
+        var __element0, __element1, __element2,
         _this = this;
       
       __element0 = document.createDocumentFragment();
       
-      __element0.appendChild(__createFragment(this.helpers.observe(this.user, function() {
-        var __element1;
+      __element1 = document.createElement("footer");
       
-        __element1 = document.createDocumentFragment();
-        if (_this.user.present) {
-          __element1.appendChild(document.createTextNode(__escape(_this.user.get('name'))));
-        } else {
-          __element1.appendChild(document.createTextNode("No user\n  "));
+      __element0.appendChild(__element1);
+      
+      __element1.appendChild(__createFragment(this.helpers.observe(this.user, function() {
+        var avatar_url, __curr, __element2, __element3, __value;
+      
+        __element2 = document.createDocumentFragment();
+        __element3 = document.createElement("a");
+        __element3.setAttribute("class", "config btn profile");
+        __element3.setAttribute("title", "Account");
+        __element2.appendChild(__element3);
+        if (avatar_url = _this.user.get('avatar_url')) {
+          __curr = document.createElement("img");
+          __curr.setAttribute("class", "avatar");
+          __value = (function() {
+            var __out0;
+      
+            __out0 = [];
+            __out0.push(__escape(avatar_url));
+            return __out0.join('');
+          })();
+          __curr.setAttribute("src", __value);
+          __element3.appendChild(__curr);
         }
-        return __element1;
+        return __element2;
       })));
       
-      __element0;
+      __element2 = document.createElement("span");
+      
+      __element1.appendChild(__element2);
+      
+      __element2 = document.createElement("a");
+      
+      __element2.setAttribute("class", "add btn newPost");
+      
+      __element2.setAttribute("title", "New post");
+      
+      __element1.appendChild(__element2);
+      
+      return __element0;
       
     }).call(__obj);
   };

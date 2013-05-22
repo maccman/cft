@@ -50,6 +50,7 @@ parseOptions = (args) ->
         when "-o", "--output"     then option = "output"
         when "-p", "--print"      then options.print = true
         when "-s", "--stdio"      then options.stdio = true
+        when "-p", "--preprocess" then options.preprocess = true
         when "-v", "--version"    then printVersion()
         else (if /^-/.test arg    then printUsage() else options.files.push arg)
 
@@ -130,7 +131,14 @@ compileToFile = (infile, identifier, root, outdir, callback) ->
 exports.run = (args = process.argv.slice 2) ->
   options = parseOptions args
 
-  if options.stdio
+  if options.preprocess
+    printUsage() if options.files.length isnt 1 or options.output
+    infile = options.files[0]
+    name = stripExtension path.basename infile
+
+    sys.puts cft.preprocess(fs.readFileSync(infile, "utf8"))
+
+  else if options.stdio
     printUsage() if options.files.length or options.output
     process.openStdin()
     read process.stdin, (source) ->
