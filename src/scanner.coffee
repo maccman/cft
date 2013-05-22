@@ -27,6 +27,7 @@ module.exports = class Scanner
   eco: (token) ->
     if token.content and @isDedentable(token.content)
       token.dedent = true
+      token.indent = true
 
     if token.directive
       token.indent = true

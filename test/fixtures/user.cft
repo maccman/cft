@@ -1,0 +1,7 @@
+<%- @helpers.observe @user, => %>
+  <% if @user.present: %>
+    <%= @user.get('name') %>
+  <% else %>
+    No user
+  <% end %>
+<% end %>
