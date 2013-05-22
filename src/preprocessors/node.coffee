@@ -150,7 +150,7 @@ module.exports = class Preprocessor
 
   recordElementAttribute: (element, name, value = '') ->
     if value.match /<%/
-      @record "__value = do ->"
+      @record "__value = do =>"
       @indent()
       @record String.preprocess(value)
       @dedent()

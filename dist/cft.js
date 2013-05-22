@@ -239,9 +239,20 @@ this.cft = (function(modules) {
       return this.output;
     };
 
-    Preprocessor.prototype.record = function(line) {
-      this.output += util.repeat("  ", this.level);
-      return this.output += line + "\n";
+    Preprocessor.prototype.record = function(lines) {
+      var line, _i, _len, _ref, _results;
+
+      _ref = lines.split("\n");
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        line = _ref[_i];
+        if (!(line)) {
+          continue;
+        }
+        this.output += util.repeat("  ", this.level);
+        _results.push(this.output += line + "\n");
+      }
+      return _results;
     };
 
     Preprocessor.prototype.indent = function() {
@@ -400,7 +411,10 @@ this.cft = (function(modules) {
         value = '';
       }
       if (value.match(/<%/)) {
-        this.record("__value = do -> (" + (String.preprocess(value)) + ")");
+        this.record("__value = do =>");
+        this.indent();
+        this.record(String.preprocess(value));
+        this.dedent();
         return this.record("" + element + ".setAttribute(" + (util.inspect(name)) + ", __value)");
       } else {
         return this.record("" + element + ".setAttribute(" + (util.inspect(name)) + ", " + (util.inspect(value)) + ")");
